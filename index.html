@@ -1,0 +1,684 @@
+<!doctype html>
+<html lang="de" class="h-full">
+ <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Exponential Quest</title>
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <script src="https://cdn.jsdelivr.net/npm/lucide@0.263.0/dist/umd/lucide.min.js"></script>
+  <script src="/_sdk/element_sdk.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700;900&amp;family=Nunito:wght@400;600;700;800&amp;display=swap" rel="stylesheet">
+  <style>
+  html, body { height: 100%; margin: 0; }
+  * { box-sizing: border-box; }
+
+  .font-title { font-family: 'Cinzel', serif; }
+  .font-body { font-family: 'Nunito', sans-serif; }
+
+  @keyframes float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-12px)} }
+  @keyframes pulse-glow { 0%,100%{box-shadow:0 0 20px rgba(255,170,50,0.3)} 50%{box-shadow:0 0 40px rgba(255,170,50,0.7)} }
+  @keyframes shake { 0%,100%{transform:translateX(0)} 20%{transform:translateX(-8px)} 40%{transform:translateX(8px)} 60%{transform:translateX(-5px)} 80%{transform:translateX(5px)} }
+  @keyframes trophy-bounce { 0%{transform:scale(0) rotate(-20deg);opacity:0} 50%{transform:scale(1.3) rotate(10deg);opacity:1} 100%{transform:scale(1) rotate(0deg);opacity:1} }
+  @keyframes slideUp { from{transform:translateY(30px);opacity:0} to{transform:translateY(0);opacity:1} }
+  @keyframes sparkle { 0%,100%{opacity:0;transform:scale(0)} 50%{opacity:1;transform:scale(1)} }
+  @keyframes starRotate { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
+  @keyframes fadeInScale { from{transform:scale(0.9);opacity:0} to{transform:scale(1);opacity:1} }
+  @keyframes progressFill { from{width:0} to{width:var(--target-width)} }
+  @keyframes confetti-fall { 0%{transform:translateY(-10px) rotate(0deg);opacity:1} 100%{transform:translateY(200px) rotate(720deg);opacity:0} }
+
+  .anim-float { animation: float 3s ease-in-out infinite; }
+  .anim-pulse-glow { animation: pulse-glow 2s ease-in-out infinite; }
+  .anim-shake { animation: shake 0.5s ease-in-out; }
+  .anim-trophy { animation: trophy-bounce 0.8s cubic-bezier(0.34,1.56,0.64,1) forwards; }
+  .anim-slide-up { animation: slideUp 0.6s ease-out forwards; }
+  .anim-sparkle { animation: sparkle 1.5s ease-in-out infinite; }
+  .anim-fade-scale { animation: fadeInScale 0.5s ease-out forwards; }
+
+  .confetti-piece {
+    position: absolute;
+    width: 8px;
+    height: 8px;
+    border-radius: 2px;
+    animation: confetti-fall 2.5s ease-in forwards;
+  }
+
+  .star-bg {
+    position: absolute;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.15);
+    animation: sparkle 3s ease-in-out infinite;
+  }
+
+  .level-card {
+    transition: all 0.3s cubic-bezier(0.4,0,0.2,1);
+  }
+  .level-card:hover {
+    transform: translateY(-3px);
+  }
+
+  .input-math {
+    transition: border-color 0.3s, box-shadow 0.3s;
+  }
+  .input-math:focus {
+    outline: none;
+    border-color: #f59e0b;
+    box-shadow: 0 0 0 3px rgba(245,158,11,0.25);
+  }
+
+  .tooltip-hint {
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 8px 14px;
+    border-radius: 8px;
+    font-size: 13px;
+    white-space: nowrap;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
+  .hint-btn:hover .tooltip-hint {
+    opacity: 1;
+  }
+
+  .math-eq {
+    font-family: 'Cambria Math', 'STIX Two Math', Georgia, serif;
+    font-style: italic;
+    letter-spacing: 0.5px;
+  }
+
+  .trophy-shelf-item {
+    transition: transform 0.3s;
+  }
+  .trophy-shelf-item:hover {
+    transform: scale(1.15) rotate(-5deg);
+  }
+</style>
+  <style>body { box-sizing: border-box; }</style>
+  <script src="/_sdk/data_sdk.js" type="text/javascript"></script>
+ </head>
+ <body class="h-full font-body">
+  <div id="app" class="w-full h-full overflow-auto relative" style="background: linear-gradient(135deg, #0f0c29 0%, #1a1040 40%, #24243e 100%);"><!-- Ambient Stars -->
+   <div id="stars-container" class="absolute inset-0 pointer-events-none overflow-hidden"></div><!-- ============ SCREEN: START ============ -->
+   <div id="screen-start" class="relative z-10 flex flex-col items-center justify-center min-h-full px-4 py-8">
+    <div class="text-center max-w-xl mx-auto"><!-- Tower SVG -->
+     <div class="anim-float mb-6">
+      <svg width="120" height="160" viewbox="0 0 120 160" class="mx-auto drop-shadow-2xl"><defs>
+        <lineargradient id="towerGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+         <stop offset="0%" style="stop-color:#6366f1" />
+         <stop offset="100%" style="stop-color:#8b5cf6" />
+        </lineargradient>
+        <lineargradient id="roofGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+         <stop offset="0%" style="stop-color:#f59e0b" />
+         <stop offset="100%" style="stop-color:#d97706" />
+        </lineargradient>
+       </defs> <rect x="30" y="50" width="60" height="110" rx="4" fill="url(#towerGrad)" /> <polygon points="60,5 20,50 100,50" fill="url(#roofGrad)" /> <rect x="48" y="70" width="24" height="30" rx="3" fill="#1e1b4b" opacity="0.7" /> <circle cx="60" cy="80" r="4" fill="#fbbf24" /> <rect x="42" y="110" width="14" height="14" rx="2" fill="#1e1b4b" opacity="0.5" /> <rect x="64" y="110" width="14" height="14" rx="2" fill="#1e1b4b" opacity="0.5" /> <rect x="48" y="135" width="24" height="25" rx="2" fill="#312e81" /> <circle cx="60" cy="30" r="6" fill="#fbbf24" opacity="0.9" /> <circle cx="60" cy="30" r="10" fill="#fbbf24" opacity="0.2" />
+      </svg>
+     </div>
+     <h1 id="title-text" class="font-title text-4xl md:text-5xl font-black text-amber-400 mb-4 tracking-wide drop-shadow-lg">Exponential Quest</h1>
+     <p id="intro-text" class="text-indigo-200 text-lg mb-8 leading-relaxed max-w-md mx-auto">Der alte Mathematik-Turm birgt 10 magische Rätsel. Löse Exponentialgleichungen, erklimme die Stufen und sammle legendäre Trophäen!</p><button id="btn-start" onclick="startGame()" class="anim-pulse-glow px-10 py-4 rounded-2xl font-bold text-lg text-gray-900 transition-all hover:scale-105 active:scale-95 cursor-pointer" style="background: linear-gradient(135deg, #fbbf24, #f59e0b);"> <span class="flex items-center gap-2"> <i data-lucide="play" style="width:22px;height:22px;"></i> <span id="start-btn-label">Abenteuer starten</span> </span> </button> <!-- Trophy Shelf Preview -->
+     <div class="mt-10 flex items-center justify-center gap-2 text-indigo-400 text-sm"><i data-lucide="trophy" style="width:16px;height:16px;"></i> <span>10 Trophäen warten auf dich</span>
+     </div>
+    </div>
+   </div><!-- ============ SCREEN: GAME ============ -->
+   <div id="screen-game" class="relative z-10 hidden min-h-full px-4 py-6">
+    <div class="max-w-2xl mx-auto"><!-- Top Bar -->
+     <header class="flex items-center justify-between mb-6">
+      <div class="flex items-center gap-3"><button onclick="showTrophies()" class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-indigo-900/60 text-amber-400 hover:bg-indigo-800/70 transition-colors cursor-pointer text-sm font-semibold border border-indigo-700/40"> <i data-lucide="trophy" style="width:16px;height:16px;"></i> <span id="trophy-count">0</span>/10 </button>
+      </div>
+      <div class="text-center"><span id="level-indicator" class="font-title text-amber-400 font-bold text-lg"></span>
+      </div>
+      <div class="flex items-center gap-2"><span id="score-display" class="px-3 py-1.5 rounded-xl bg-indigo-900/60 text-indigo-200 text-sm font-semibold border border-indigo-700/40"> ⭐ <span id="score-value">0</span> </span>
+      </div>
+     </header><!-- Progress Bar -->
+     <div class="w-full h-3 rounded-full bg-indigo-950/80 mb-6 overflow-hidden border border-indigo-800/40">
+      <div id="progress-bar" class="h-full rounded-full transition-all duration-700 ease-out" style="width:0%; background: linear-gradient(90deg, #6366f1, #a78bfa, #fbbf24);"></div>
+     </div><!-- Story Card -->
+     <div id="story-card" class="mb-6 p-5 rounded-2xl border border-indigo-700/30 anim-fade-scale" style="background: linear-gradient(135deg, rgba(99,102,241,0.15), rgba(139,92,246,0.1));">
+      <div class="flex items-start gap-3">
+       <div id="story-icon" class="text-3xl flex-shrink-0 mt-1"></div>
+       <div>
+        <h3 id="story-title" class="font-title text-amber-400 font-bold text-lg mb-1"></h3>
+        <p id="story-text" class="text-indigo-200 text-sm leading-relaxed"></p>
+       </div>
+      </div>
+     </div><!-- Equation Card -->
+     <div id="equation-card" class="p-6 rounded-2xl border border-indigo-600/30 mb-6 anim-slide-up" style="background: rgba(30,27,75,0.7); backdrop-filter: blur(10px);">
+      <div class="text-center mb-5"><span class="inline-block px-3 py-1 rounded-full bg-amber-500/20 text-amber-400 text-xs font-bold mb-3 tracking-wider uppercase" id="task-label">Aufgabe</span>
+       <div id="equation-display" class="math-eq text-2xl md:text-3xl text-white font-bold mb-2"></div>
+       <p id="equation-instruction" class="text-indigo-300 text-sm mt-2"></p>
+      </div><!-- Hint Area -->
+      <div id="hint-area" class="hidden mb-4 p-3 rounded-xl bg-amber-500/10 border border-amber-500/20">
+       <div class="flex items-start gap-2"><i data-lucide="lightbulb" style="width:18px;height:18px;" class="text-amber-400 flex-shrink-0 mt-0.5"></i>
+        <p id="hint-text" class="text-amber-300 text-sm"></p>
+       </div>
+      </div><!-- Input Area -->
+      <div class="flex flex-col items-center gap-3">
+       <div class="flex items-center gap-2 w-full max-w-sm"><span class="text-indigo-300 font-semibold math-eq text-lg" id="answer-prefix">x =</span> <input type="text" id="answer-input" class="input-math flex-1 px-4 py-3 rounded-xl bg-indigo-950/80 border-2 border-indigo-600/40 text-white text-center text-lg font-semibold" placeholder="Deine Antwort..." autocomplete="off">
+       </div>
+       <div class="flex items-center gap-3"><button id="btn-hint" onclick="showHint()" class="hint-btn relative px-4 py-2 rounded-xl bg-indigo-800/50 text-indigo-300 text-sm font-semibold hover:bg-indigo-700/50 transition-colors cursor-pointer border border-indigo-600/30"> <i data-lucide="lightbulb" style="width:14px;height:14px;" class="inline-block mr-1"></i> Tipp </button> <button id="btn-check" onclick="checkAnswer()" class="px-8 py-3 rounded-xl font-bold text-gray-900 text-lg transition-all hover:scale-105 active:scale-95 cursor-pointer" style="background: linear-gradient(135deg, #fbbf24, #f59e0b);"> Prüfen </button>
+       </div>
+      </div><!-- Feedback -->
+      <div id="feedback" class="hidden mt-4 p-4 rounded-xl text-center font-semibold"></div>
+     </div><!-- Steps Visualization -->
+     <div class="flex justify-center gap-1.5 mt-4 flex-wrap" id="steps-dots"></div>
+    </div>
+   </div><!-- ============ SCREEN: TROPHIES ============ -->
+   <div id="screen-trophies" class="relative z-10 hidden min-h-full px-4 py-6">
+    <div class="max-w-2xl mx-auto">
+     <div class="flex items-center justify-between mb-6"><button onclick="closeTrophies()" class="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-indigo-900/60 text-indigo-200 hover:bg-indigo-800/70 transition-colors cursor-pointer text-sm border border-indigo-700/40"> <i data-lucide="arrow-left" style="width:16px;height:16px;"></i> Zurück </button>
+      <h2 class="font-title text-amber-400 font-bold text-xl">Trophäen-Vitrine</h2>
+      <div class="w-20"></div>
+     </div>
+     <div id="trophy-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4"></div>
+    </div>
+   </div><!-- ============ SCREEN: LEVEL COMPLETE ============ -->
+   <div id="screen-level-complete" class="relative z-10 hidden flex flex-col items-center justify-center min-h-full px-4 py-8">
+    <div id="confetti-container" class="absolute inset-0 pointer-events-none overflow-hidden"></div>
+    <div class="text-center max-w-md mx-auto anim-fade-scale relative z-10">
+     <div id="trophy-reveal" class="text-7xl mb-4 anim-trophy"></div>
+     <h2 id="complete-title" class="font-title text-3xl font-black text-amber-400 mb-2"></h2>
+     <p id="complete-text" class="text-indigo-200 mb-2"></p>
+     <p id="complete-score" class="text-amber-300 font-bold text-lg mb-6"></p><button id="btn-next-level" onclick="nextLevel()" class="px-8 py-3 rounded-2xl font-bold text-gray-900 text-lg transition-all hover:scale-105 active:scale-95 cursor-pointer" style="background: linear-gradient(135deg, #fbbf24, #f59e0b);"> <span class="flex items-center gap-2"> Weiter <i data-lucide="arrow-right" style="width:20px;height:20px;"></i> </span> </button>
+    </div>
+   </div><!-- ============ SCREEN: GAME COMPLETE ============ -->
+   <div id="screen-game-complete" class="relative z-10 hidden flex flex-col items-center justify-center min-h-full px-4 py-8">
+    <div id="final-confetti" class="absolute inset-0 pointer-events-none overflow-hidden"></div>
+    <div class="text-center max-w-lg mx-auto anim-fade-scale relative z-10">
+     <div class="text-8xl mb-4 anim-trophy">
+      🏆
+     </div>
+     <h2 class="font-title text-4xl font-black text-amber-400 mb-3">Meister der Exponenten!</h2>
+     <p class="text-indigo-200 text-lg mb-2">Du hast alle 10 Stufen des Turms bezwungen!</p>
+     <p id="final-score" class="text-amber-300 font-bold text-xl mb-6"></p>
+     <div class="flex gap-3 justify-center flex-wrap"><button onclick="showTrophies()" class="px-6 py-3 rounded-xl bg-indigo-800/60 text-indigo-200 font-semibold hover:bg-indigo-700/60 transition-colors cursor-pointer border border-indigo-600/30"> <i data-lucide="trophy" style="width:16px;height:16px;" class="inline-block mr-1"></i> Trophäen </button> <button onclick="restartGame()" class="px-6 py-3 rounded-xl font-bold text-gray-900 transition-all hover:scale-105 cursor-pointer" style="background: linear-gradient(135deg, #fbbf24, #f59e0b);"> <i data-lucide="rotate-ccw" style="width:16px;height:16px;" class="inline-block mr-1"></i> Nochmal spielen </button>
+     </div>
+    </div>
+   </div>
+  </div>
+  <script>
+// ===== GAME DATA =====
+const levels = [
+  {
+    id: 1,
+    story: { icon: "🚪", title: "Das Eingangstor", text: "Du stehst vor dem uralten Turm. Eine leuchtende Gleichung versperrt den Eingang. Löse sie, um einzutreten!" },
+    equation: "e<sup>x</sup> = 6",
+    instruction: "Bestimme x. Gib deine Antwort als ln(...) an.",
+    hint: "Wende den natürlichen Logarithmus auf beide Seiten an: x = ln(6)",
+    answerPrefix: "x =",
+    acceptedAnswers: ["ln(6)", "ln6"],
+    trophy: { emoji: "🔑", name: "Schlüssel des Turms" }
+  },
+  {
+    id: 2,
+    story: { icon: "🪜", title: "Die erste Treppe", text: "Die Stufen knarren unter deinen Füßen. Ein Rätsel erscheint an der Wand..." },
+    equation: "e<sup>2x</sup> = 11",
+    instruction: "Bestimme x.",
+    hint: "Logarithmiere: 2x = ln(11), also x = ln(11)/2",
+    answerPrefix: "x =",
+    acceptedAnswers: ["ln(11)/2", "ln11/2"],
+    trophy: { emoji: "🕯️", name: "Kerzenlicht" }
+  },
+  {
+    id: 3,
+    story: { icon: "📖", title: "Die Bibliothek", text: "Staubige Bücher füllen die Regale. Ein aufgeschlagenes Buch zeigt eine Gleichung..." },
+    equation: "e<sup>x−2</sup> = 8",
+    instruction: "Bestimme x.",
+    hint: "Logarithmiere: x − 2 = ln(8), also x = 2 + ln(8)",
+    answerPrefix: "x =",
+    acceptedAnswers: ["2+ln(8)", "2+ln8", "ln(8)+2", "ln8+2"],
+    trophy: { emoji: "📘", name: "Buch des Wissens" }
+  },
+  {
+    id: 4,
+    story: { icon: "⚗️", title: "Das Alchemie-Labor", text: "Geheimnisvolle Tränke brodeln. Eine Formel leuchtet über dem Kessel..." },
+    equation: "4 · e<sup>x</sup> = 20",
+    instruction: "Bestimme x. Tipp: Vereinfache zuerst!",
+    hint: "Teile erst durch 4: e^x = 5, dann x = ln(5)",
+    answerPrefix: "x =",
+    acceptedAnswers: ["ln(5)", "ln5"],
+    trophy: { emoji: "⚗️", name: "Elixier der Erkenntnis" }
+  },
+  {
+    id: 5,
+    story: { icon: "🗡️", title: "Die Waffenkammer", text: "Magische Waffen hängen an den Wänden. Doch nur wer rechnen kann, darf sie berühren..." },
+    equation: "3 · e<sup>2x</sup> = 27",
+    instruction: "Bestimme x.",
+    hint: "Teile durch 3: e^(2x) = 9, dann 2x = ln(9), x = ln(9)/2",
+    answerPrefix: "x =",
+    acceptedAnswers: ["ln(9)/2", "ln9/2"],
+    trophy: { emoji: "🗡️", name: "Schwert der Logik" }
+  },
+  {
+    id: 6,
+    story: { icon: "🌙", title: "Der Mondbalkon", text: "Du trittst auf den Balkon hinaus. Der Mond beleuchtet eine schwebende Formel..." },
+    equation: "5 · e<sup>x+1</sup> = 25",
+    instruction: "Bestimme x.",
+    hint: "Teile durch 5: e^(x+1) = 5, dann x+1 = ln(5), x = ln(5) − 1",
+    answerPrefix: "x =",
+    acceptedAnswers: ["ln(5)-1", "ln5-1"],
+    trophy: { emoji: "🌙", name: "Mondstein" }
+  },
+  {
+    id: 7,
+    story: { icon: "🦠", title: "Der Garten des Lebens", text: "Magische Bakterien wachsen im Turmgarten. Eine Tafel zeigt das Wachstumsmodell..." },
+    equation: "N(t) = 200 · e<sup>0,3t</sup>",
+    instruction: "Wann sind 1000 Bakterien vorhanden? Bestimme t.",
+    hint: "200·e^(0,3t) = 1000 → e^(0,3t) = 5 → t = ln(5)/0,3",
+    answerPrefix: "t =",
+    acceptedAnswers: ["ln(5)/0,3", "ln(5)/0.3", "ln5/0,3", "ln5/0.3"],
+    trophy: { emoji: "🌱", name: "Samen des Wachstums" }
+  },
+  {
+    id: 8,
+    story: { icon: "☢️", title: "Die Krypta", text: "Tief im Keller findest du eine strahlende Substanz. Ein Warnschild zeigt das Zerfallsmodell..." },
+    equation: "m(t) = 50 · e<sup>−0,2t</sup>",
+    instruction: "Wann sind nur noch 10 g vorhanden? Bestimme t.",
+    hint: "50·e^(−0,2t) = 10 → e^(−0,2t) = 0,2 → t = ln(5)/0,2",
+    answerPrefix: "t =",
+    acceptedAnswers: ["ln(5)/0,2", "ln(5)/0.2", "ln5/0,2", "ln5/0.2"],
+    trophy: { emoji: "💎", name: "Kristall der Zeit" }
+  },
+  {
+    id: 9,
+    story: { icon: "💰", title: "Die Schatzkammer", text: "Goldmünzen glitzern! Doch der Tresor öffnet sich nur mit der richtigen Berechnung..." },
+    equation: "K(t) = 1000 · e<sup>0,05t</sup>",
+    instruction: "Nach wie vielen Jahren beträgt das Kapital 1500 €? Bestimme t.",
+    hint: "e^(0,05t) = 1,5 → t = ln(1,5)/0,05",
+    answerPrefix: "t =",
+    acceptedAnswers: ["ln(1,5)/0,05", "ln(1.5)/0.05", "ln(1,5)/0.05", "ln(1.5)/0,05", "ln1,5/0,05", "ln1.5/0.05"],
+    trophy: { emoji: "💰", name: "Sack voll Gold" }
+  },
+  {
+    id: 10,
+    story: { icon: "🔥", title: "Die Turmspitze", text: "Du hast es fast geschafft! Das letzte Rätsel wartet an der Spitze. Ein Körper kühlt ab..." },
+    equation: "T(t) = 20 + 60 · e<sup>−0,4t</sup>",
+    instruction: "Wann beträgt die Temperatur 30 °C? Bestimme t.",
+    hint: "60·e^(−0,4t) = 10 → e^(−0,4t) = 1/6 → t = ln(6)/0,4",
+    answerPrefix: "t =",
+    acceptedAnswers: ["ln(6)/0,4", "ln(6)/0.4", "ln6/0,4", "ln6/0.4"],
+    trophy: { emoji: "🔥", name: "Flamme der Meisterschaft" }
+  }
+];
+
+// ===== GAME STATE =====
+let currentLevel = 0;
+let score = 0;
+let trophies = [];
+let hintUsed = false;
+let gameStarted = false;
+let previousScreen = 'screen-game';
+
+// ===== ELEMENT SDK =====
+const defaultConfig = {
+  game_title: "Exponential Quest",
+  start_button_text: "Abenteuer starten",
+  story_intro: "Der alte Mathematik-Turm birgt 10 magische Rätsel. Löse Exponentialgleichungen, erklimme die Stufen und sammle legendäre Trophäen!",
+  background_color: "#0f0c29",
+  surface_color: "#1e1b4b",
+  text_color: "#c7d2fe",
+  primary_action_color: "#f59e0b",
+  secondary_action_color: "#6366f1",
+  font_family: "Nunito",
+  font_size: 16
+};
+
+function applyConfig(config) {
+  const c = { ...defaultConfig, ...config };
+  const baseFont = c.font_family || defaultConfig.font_family;
+  const baseSize = c.font_size || defaultConfig.font_size;
+
+  // Title
+  const titleEl = document.getElementById('title-text');
+  if (titleEl) titleEl.textContent = c.game_title;
+
+  // Intro
+  const introEl = document.getElementById('intro-text');
+  if (introEl) introEl.textContent = c.story_intro;
+
+  // Start button
+  const startLabel = document.getElementById('start-btn-label');
+  if (startLabel) startLabel.textContent = c.start_button_text;
+
+  // Colors
+  const app = document.getElementById('app');
+  if (app) app.style.background = `linear-gradient(135deg, ${c.background_color} 0%, ${adjustBrightness(c.background_color, 20)} 40%, ${adjustBrightness(c.background_color, 30)} 100%)`;
+
+  // Surface color
+  document.querySelectorAll('#story-card').forEach(el => {
+    el.style.background = `linear-gradient(135deg, ${c.secondary_action_color}22, ${c.secondary_action_color}18)`;
+  });
+  document.querySelectorAll('#equation-card').forEach(el => {
+    el.style.background = hexToRgba(c.surface_color, 0.7);
+  });
+
+  // Text color on body text elements
+  document.querySelectorAll('#intro-text, #story-text, #equation-instruction').forEach(el => {
+    el.style.color = c.text_color;
+  });
+
+  // Primary action buttons
+  const primaryGrad = `linear-gradient(135deg, ${c.primary_action_color}, ${adjustBrightness(c.primary_action_color, -15)})`;
+  document.querySelectorAll('#btn-start, #btn-check, #btn-next-level').forEach(el => {
+    el.style.background = primaryGrad;
+  });
+
+  // Secondary action
+  document.querySelectorAll('#btn-hint').forEach(el => {
+    el.style.borderColor = c.secondary_action_color + '55';
+  });
+
+  // Font
+  const fontStack = `'${baseFont}', 'Nunito', sans-serif`;
+  document.body.style.fontFamily = fontStack;
+  document.querySelectorAll('.font-body, #intro-text, #story-text, #equation-instruction, #answer-input').forEach(el => {
+    el.style.fontFamily = fontStack;
+  });
+
+  // Font size
+  document.querySelectorAll('#intro-text, #story-text, #equation-instruction').forEach(el => {
+    el.style.fontSize = `${baseSize * 0.875}px`;
+  });
+  document.querySelectorAll('#equation-display').forEach(el => {
+    el.style.fontSize = `${baseSize * 1.75}px`;
+  });
+  document.querySelectorAll('#title-text').forEach(el => {
+    el.style.fontSize = `${baseSize * 2.75}px`;
+  });
+}
+
+function adjustBrightness(hex, amount) {
+  hex = hex.replace('#', '');
+  let r = Math.min(255, Math.max(0, parseInt(hex.substring(0,2),16) + amount));
+  let g = Math.min(255, Math.max(0, parseInt(hex.substring(2,4),16) + amount));
+  let b = Math.min(255, Math.max(0, parseInt(hex.substring(4,6),16) + amount));
+  return `#${r.toString(16).padStart(2,'0')}${g.toString(16).padStart(2,'0')}${b.toString(16).padStart(2,'0')}`;
+}
+
+function hexToRgba(hex, alpha) {
+  hex = hex.replace('#','');
+  const r = parseInt(hex.substring(0,2),16);
+  const g = parseInt(hex.substring(2,4),16);
+  const b = parseInt(hex.substring(4,6),16);
+  return `rgba(${r},${g},${b},${alpha})`;
+}
+
+window.elementSdk.init({
+  defaultConfig,
+  onConfigChange: async (config) => { applyConfig(config); },
+  mapToCapabilities: (config) => ({
+    recolorables: [
+      { get: () => config.background_color || defaultConfig.background_color, set: (v) => { config.background_color = v; window.elementSdk.setConfig({ background_color: v }); } },
+      { get: () => config.surface_color || defaultConfig.surface_color, set: (v) => { config.surface_color = v; window.elementSdk.setConfig({ surface_color: v }); } },
+      { get: () => config.text_color || defaultConfig.text_color, set: (v) => { config.text_color = v; window.elementSdk.setConfig({ text_color: v }); } },
+      { get: () => config.primary_action_color || defaultConfig.primary_action_color, set: (v) => { config.primary_action_color = v; window.elementSdk.setConfig({ primary_action_color: v }); } },
+      { get: () => config.secondary_action_color || defaultConfig.secondary_action_color, set: (v) => { config.secondary_action_color = v; window.elementSdk.setConfig({ secondary_action_color: v }); } }
+    ],
+    borderables: [],
+    fontEditable: {
+      get: () => config.font_family || defaultConfig.font_family,
+      set: (v) => { config.font_family = v; window.elementSdk.setConfig({ font_family: v }); }
+    },
+    fontSizeable: {
+      get: () => config.font_size || defaultConfig.font_size,
+      set: (v) => { config.font_size = v; window.elementSdk.setConfig({ font_size: v }); }
+    }
+  }),
+  mapToEditPanelValues: (config) => new Map([
+    ["game_title", config.game_title || defaultConfig.game_title],
+    ["start_button_text", config.start_button_text || defaultConfig.start_button_text],
+    ["story_intro", config.story_intro || defaultConfig.story_intro]
+  ])
+});
+
+// ===== AMBIENT STARS =====
+function createStars() {
+  const container = document.getElementById('stars-container');
+  for (let i = 0; i < 40; i++) {
+    const star = document.createElement('div');
+    star.className = 'star-bg';
+    const size = Math.random() * 4 + 2;
+    star.style.cssText = `width:${size}px;height:${size}px;top:${Math.random()*100}%;left:${Math.random()*100}%;animation-delay:${Math.random()*3}s;`;
+    container.appendChild(star);
+  }
+}
+
+// ===== SCREEN MANAGEMENT =====
+function showScreen(id) {
+  ['screen-start','screen-game','screen-trophies','screen-level-complete','screen-game-complete'].forEach(s => {
+    document.getElementById(s).classList.add('hidden');
+    document.getElementById(s).classList.remove('flex');
+  });
+  const el = document.getElementById(id);
+  el.classList.remove('hidden');
+  if (['screen-level-complete','screen-game-complete','screen-start'].includes(id)) {
+    el.classList.add('flex');
+  }
+  // Scroll to top
+  document.getElementById('app').scrollTop = 0;
+}
+
+// ===== GAME FUNCTIONS =====
+function startGame() {
+  currentLevel = 0;
+  score = 0;
+  trophies = [];
+  gameStarted = true;
+  updateScore();
+  loadLevel();
+  showScreen('screen-game');
+}
+
+function restartGame() {
+  startGame();
+}
+
+function loadLevel() {
+  const level = levels[currentLevel];
+  hintUsed = false;
+
+  // Update UI
+  document.getElementById('level-indicator').textContent = `Stufe ${level.id}/10`;
+  document.getElementById('progress-bar').style.width = `${(currentLevel / 10) * 100}%`;
+  document.getElementById('story-icon').textContent = level.story.icon;
+  document.getElementById('story-title').textContent = level.story.title;
+  document.getElementById('story-text').textContent = level.story.text;
+  document.getElementById('equation-display').innerHTML = level.equation;
+  document.getElementById('equation-instruction').textContent = level.instruction;
+  document.getElementById('answer-prefix').textContent = level.answerPrefix;
+  document.getElementById('answer-input').value = '';
+  document.getElementById('hint-area').classList.add('hidden');
+  document.getElementById('feedback').classList.add('hidden');
+  document.getElementById('task-label').textContent = `Aufgabe ${level.id}`;
+
+  // Dots
+  renderDots();
+
+  // Re-init icons
+  lucide.createIcons();
+}
+
+function renderDots() {
+  const container = document.getElementById('steps-dots');
+  container.innerHTML = '';
+  levels.forEach((_, i) => {
+    const dot = document.createElement('div');
+    dot.className = 'w-3 h-3 rounded-full transition-all duration-300';
+    if (i < currentLevel) {
+      dot.style.background = '#fbbf24';
+      dot.style.boxShadow = '0 0 8px rgba(251,191,36,0.5)';
+    } else if (i === currentLevel) {
+      dot.style.background = '#818cf8';
+      dot.style.boxShadow = '0 0 8px rgba(129,140,248,0.5)';
+      dot.classList.add('w-4', 'h-4');
+      dot.classList.remove('w-3', 'h-3');
+    } else {
+      dot.style.background = 'rgba(99,102,241,0.3)';
+    }
+    container.appendChild(dot);
+  });
+}
+
+function showHint() {
+  const level = levels[currentLevel];
+  document.getElementById('hint-text').textContent = level.hint;
+  document.getElementById('hint-area').classList.remove('hidden');
+  hintUsed = true;
+}
+
+function normalizeAnswer(str) {
+  return str.replace(/\s+/g, '').toLowerCase().replace(/ln\(/g,'ln(').replace(/\)/g,')');
+}
+
+function checkAnswer() {
+  const input = document.getElementById('answer-input').value.trim();
+  if (!input) return;
+
+  const level = levels[currentLevel];
+  const normalized = normalizeAnswer(input);
+  const isCorrect = level.acceptedAnswers.some(a => normalizeAnswer(a) === normalized);
+  const feedback = document.getElementById('feedback');
+  feedback.classList.remove('hidden');
+
+  if (isCorrect) {
+    const points = hintUsed ? 7 : 10;
+    score += points;
+    trophies.push(level.trophy);
+    updateScore();
+
+    feedback.style.background = 'rgba(34,197,94,0.15)';
+    feedback.style.borderColor = 'rgba(34,197,94,0.3)';
+    feedback.style.color = '#4ade80';
+    feedback.innerHTML = `✅ Richtig! +${points} Punkte${hintUsed ? ' (Tipp verwendet)' : ''}`;
+
+    // Disable input
+    document.getElementById('answer-input').disabled = true;
+    document.getElementById('btn-check').disabled = true;
+
+    setTimeout(() => {
+      showLevelComplete();
+    }, 1200);
+  } else {
+    feedback.style.background = 'rgba(239,68,68,0.15)';
+    feedback.style.borderColor = 'rgba(239,68,68,0.3)';
+    feedback.style.color = '#f87171';
+    feedback.innerHTML = '❌ Nicht ganz richtig. Probiere es nochmal!';
+    document.getElementById('equation-card').classList.add('anim-shake');
+    setTimeout(() => {
+      document.getElementById('equation-card').classList.remove('anim-shake');
+    }, 500);
+  }
+}
+
+function showLevelComplete() {
+  const level = levels[currentLevel];
+  document.getElementById('trophy-reveal').textContent = level.trophy.emoji;
+  document.getElementById('complete-title').textContent = level.trophy.name;
+  document.getElementById('complete-text').textContent = `Stufe ${level.id} gemeistert!`;
+  document.getElementById('complete-score').textContent = `⭐ ${score} Punkte`;
+
+  // Button text
+  const nextBtn = document.getElementById('btn-next-level');
+  if (currentLevel >= levels.length - 1) {
+    nextBtn.innerHTML = '<span class="flex items-center gap-2">Ergebnis anzeigen <i data-lucide="award" style="width:20px;height:20px;"></i></span>';
+  } else {
+    nextBtn.innerHTML = '<span class="flex items-center gap-2">Weiter <i data-lucide="arrow-right" style="width:20px;height:20px;"></i></span>';
+  }
+
+  previousScreen = 'screen-level-complete';
+  showScreen('screen-level-complete');
+  spawnConfetti('confetti-container');
+  lucide.createIcons();
+}
+
+function nextLevel() {
+  currentLevel++;
+  if (currentLevel >= levels.length) {
+    showGameComplete();
+  } else {
+    document.getElementById('answer-input').disabled = false;
+    document.getElementById('btn-check').disabled = false;
+    loadLevel();
+    showScreen('screen-game');
+  }
+}
+
+function showGameComplete() {
+  document.getElementById('final-score').textContent = `Endpunktzahl: ⭐ ${score} / 100`;
+  previousScreen = 'screen-game-complete';
+  showScreen('screen-game-complete');
+  spawnConfetti('final-confetti');
+  lucide.createIcons();
+}
+
+function updateScore() {
+  const scoreVal = document.getElementById('score-value');
+  if (scoreVal) scoreVal.textContent = score;
+  const trophyCount = document.getElementById('trophy-count');
+  if (trophyCount) trophyCount.textContent = trophies.length;
+}
+
+// ===== TROPHIES =====
+function showTrophies() {
+  if (!document.getElementById('screen-game').classList.contains('hidden')) {
+    previousScreen = 'screen-game';
+  } else if (!document.getElementById('screen-game-complete').classList.contains('hidden')) {
+    previousScreen = 'screen-game-complete';
+  }
+
+  const grid = document.getElementById('trophy-grid');
+  grid.innerHTML = '';
+  levels.forEach((level, i) => {
+    const earned = trophies.some(t => t.name === level.trophy.name);
+    const card = document.createElement('div');
+    card.className = `trophy-shelf-item flex flex-col items-center p-4 rounded-2xl border text-center ${earned ? 'border-amber-500/40' : 'border-indigo-700/30'}`;
+    card.style.background = earned ? 'rgba(245,158,11,0.1)' : 'rgba(30,27,75,0.5)';
+    card.style.animationDelay = `${i * 0.08}s`;
+    card.innerHTML = `
+      <div class="text-4xl mb-2 ${earned ? '' : 'opacity-20 grayscale'}">${level.trophy.emoji}</div>
+      <div class="text-xs font-semibold ${earned ? 'text-amber-400' : 'text-indigo-500'}">${level.trophy.name}</div>
+      <div class="text-[10px] mt-1 ${earned ? 'text-indigo-300' : 'text-indigo-600'}">Stufe ${level.id}</div>
+    `;
+    grid.appendChild(card);
+  });
+  showScreen('screen-trophies');
+}
+
+function closeTrophies() {
+  showScreen(previousScreen);
+}
+
+// ===== CONFETTI =====
+function spawnConfetti(containerId) {
+  const container = document.getElementById(containerId);
+  container.innerHTML = '';
+  const colors = ['#fbbf24','#f59e0b','#6366f1','#a78bfa','#ec4899','#34d399','#f87171'];
+  for (let i = 0; i < 50; i++) {
+    const piece = document.createElement('div');
+    piece.className = 'confetti-piece';
+    piece.style.left = `${Math.random()*100}%`;
+    piece.style.top = `${Math.random()*30}%`;
+    piece.style.background = colors[Math.floor(Math.random()*colors.length)];
+    piece.style.animationDelay = `${Math.random()*1.5}s`;
+    piece.style.animationDuration = `${2 + Math.random()*1.5}s`;
+    piece.style.transform = `rotate(${Math.random()*360}deg)`;
+    container.appendChild(piece);
+  }
+}
+
+// ===== ENTER KEY =====
+document.getElementById('answer-input').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') {
+    e.preventDefault();
+    checkAnswer();
+  }
+});
+
+// ===== INIT =====
+createStars();
+lucide.createIcons();
+applyConfig(defaultConfig);
+</script>
+ <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9df6459da5bff66d',t:'MTc3NDAyNjAxNi4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>
